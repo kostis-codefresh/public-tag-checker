@@ -34,17 +34,11 @@ func TestUnitwithZeroVersions(t *testing.T) {
 	assert.Equal(t, "0.11.1", newest, "Newest tag was not found")
 }
 
-// func TestReadMediumDataset(t *testing.T) {
+func TestIntegrationUbuntu(t *testing.T) {
 
-// 	stepsFound := readJSON("testdata/input-medium.json")
+	dockerHubConnection := connectToDockerHub()
 
-// 	assert.Equal(t, 14, len(stepsFound), "Incorrect number of steps found")
-// }
+	tagsFound := findAllTags(dockerHubConnection, "ubuntu")
 
-// func TestReadFullDataset(t *testing.T) {
-
-// 	stepsFound := readJSON("testdata/input-full.json")
-
-// 	assert.Equal(t, 25, len(stepsFound), "Incorrect number of steps found")
-// }
-//
+	assert.LessOrEqual(t, 4, len(tagsFound), "Ubuntu should have more than 4 tags in Dockerhub")
+}
