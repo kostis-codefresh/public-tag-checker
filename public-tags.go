@@ -34,6 +34,11 @@ func main() {
 	fmt.Printf("Found %d tags for the base image\n", len(tagsFound))
 
 	newestTag := findNewestSemanticTag(tagsFound)
+
+	if newestTag == "" {
+		fmt.Println("Could not any find tags that follow semantic versioning.")
+		os.Exit(1)
+	}
 	fmt.Println(newestTag)
 
 }
@@ -96,8 +101,7 @@ func findNewestSemanticTag(allTags []string) string {
 	}
 
 	if len(validTags) == 0 {
-		fmt.Println("Could not any find tags that follow semantic versioning.")
-		os.Exit(1)
+		return ""
 	}
 
 	fmt.Println("Found compliant tags: ", validTags)
