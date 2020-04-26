@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"net/http"
 	"os"
 	"strings"
 
@@ -16,11 +16,20 @@ func main() {
 		os.Exit(1)
 	}
 
-	dockeHubConnection := connectToDockerHub()
+	baseImage := os.Args[1]
 
-	tagsFound := findAllTags(dockeHubConnection, os.Args[1])
+	dockerHubConnection := connectToDockerHub()
 
-	log.Printf("Found %d tags for the base image\n", len(tagsFound))
+	tagsFound := findAllTags(dockerHubConnection, baseImage)
+
+	tagCount := len(tagsFound)
+
+	if tagCount == 0 {
+		fmt.Printf("Could not find tags for image %s. Try alpine, ubuntu, hashicorp/terraform, codefresh/cli etc\n", baseImage)
+		os.Exit(1)
+	}
+
+	fmt.Printf("Found %d tags for the base image\n", len(tagsFound))
 
 }
 
@@ -28,12 +37,13 @@ func connectToDockerHub() *registry.Registry {
 	url := "https://registry.hub.docker.com"
 	username := "" // anonymous
 	password := "" // anonymous
-	dockerHubConnection, err := registry.New(url, username, password)
-	if err != nil {
-		log.Fatal(err)
-	}
 
-	log.Println("Connection successful")
+	transport := http.DefaultTransport
+	dockerHubConnection, err := newFromTransport(url, username, password, transport, registry.Quiet)
+
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	return dockerHubConnection
 }
@@ -44,10 +54,10 @@ func findAllTags(dockerHubConnection *registry.Registry, baseImage string) []str
 	}
 	tags, err := dockerHubConnection.Tags(baseImage)
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 		return nil
 	}
-	log.Println("Found Dockerhub tags: ", tags)
+	fmt.Println("Found Dockerhub tags: ", tags)
 	return tags
 
 	// for _, tag := range tags {
@@ -56,4 +66,22 @@ func findAllTags(dockerHubConnection *registry.Registry, baseImage string) []str
 	// 	}
 	// }
 
+}
+
+func newFromTransport(registryURL, username, password string, transport http.RoundTripper, logf registry.LogfCallback) (*registry.Registry, error) {
+	url := strings.TrimSuffix(registryURL, "/")
+	transport = registry.WrapTransport(transport, url, username, password)
+	registry := &registry.Registry{
+		URL: url,
+		Client: &http.Client{
+			Transport: transport,
+		},
+		Logf: logf,
+	}
+
+	if err := registry.Ping(); err != nil {
+		return nil, err
+	}
+
+	return registry, nil
 }
