@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/coreos/go-semver/semver"
 	"github.com/heroku/docker-registry-client/registry"
 )
 
@@ -30,6 +31,9 @@ func main() {
 	}
 
 	fmt.Printf("Found %d tags for the base image\n", len(tagsFound))
+
+	newestTag := findNewestSemanticTag(tagsFound)
+	fmt.Println(newestTag)
 
 }
 
@@ -60,12 +64,6 @@ func findAllTags(dockerHubConnection *registry.Registry, baseImage string) []str
 	fmt.Println("Found Dockerhub tags: ", tags)
 	return tags
 
-	// for _, tag := range tags {
-	// 	if tag == imageAndTag.Tag {
-	// 		return true
-	// 	}
-	// }
-
 }
 
 func newFromTransport(registryURL, username, password string, transport http.RoundTripper, logf registry.LogfCallback) (*registry.Registry, error) {
@@ -84,4 +82,19 @@ func newFromTransport(registryURL, username, password string, transport http.Rou
 	}
 
 	return registry, nil
+}
+
+func findNewestSemanticTag(allTags []string) string {
+	var validTags []semver.Version
+
+	for _, tag := range allTags {
+		version, err := semver.NewVersion(tag)
+		if err == nil {
+			validTags = append(validTags, *version)
+		}
+	}
+	fmt.Println("Found compliant tags: ", validTags)
+
+	return "lala"
+
 }
