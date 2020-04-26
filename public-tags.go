@@ -31,8 +31,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Printf("Found %d tags for the base image\n", len(tagsFound))
-
 	newestTag := findNewestSemanticTag(tagsFound)
 
 	if newestTag == "" {
@@ -67,7 +65,6 @@ func findAllTags(dockerHubConnection *registry.Registry, baseImage string) []str
 		fmt.Println(err)
 		return nil
 	}
-	fmt.Println("Found Dockerhub tags: ", tags)
 	return tags
 
 }
@@ -104,13 +101,9 @@ func findNewestSemanticTag(allTags []string) string {
 		return ""
 	}
 
-	fmt.Println("Found compliant tags: ", validTags)
-
 	sort.Slice(validTags, func(i, j int) bool {
 		return validTags[i].LessThan(validTags[j])
 	})
-
-	fmt.Println("Found sorted tags: ", validTags)
 
 	return validTags[len(validTags)-1].String()
 
