@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/coreos/go-semver/semver"
@@ -93,8 +94,20 @@ func findNewestSemanticTag(allTags []string) string {
 			validTags = append(validTags, *version)
 		}
 	}
+
+	if len(validTags) == 0 {
+		fmt.Println("Could not any find tags that follow semantic versioning.")
+		os.Exit(1)
+	}
+
 	fmt.Println("Found compliant tags: ", validTags)
 
-	return "lala"
+	sort.Slice(validTags, func(i, j int) bool {
+		return validTags[i].LessThan(validTags[j])
+	})
+
+	fmt.Println("Found sorted tags: ", validTags)
+
+	return validTags[len(validTags)-1].String()
 
 }
