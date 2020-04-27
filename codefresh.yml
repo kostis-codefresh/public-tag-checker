@@ -4,10 +4,10 @@
 version: "1.0"
 # Stages can help you organize your steps in stages
 stages:
-  - "clone"
   - "prepare"
   - "test"
   - "build"
+  - "deploy"
 
 steps:
   clone:
@@ -18,7 +18,7 @@ steps:
     # Learn more at codefresh.io/docs/docs/codefresh-yaml/variables/
     revision: "${{CF_BRANCH}}"
     git: "github-1"
-    stage: "clone"
+    stage: "prepare"
 
   build_deps:
     title: "Building Deps Docker image"
@@ -31,21 +31,41 @@ steps:
     disable_push: true
     stage: "prepare"
 
-  test:
+  unit_test:
     title: "Unit Test"
-    type: "freestyle" # Run any command
+    type: "freestyle" 
     image: ${{build_deps}}
-    working_directory: "${{clone}}" # Running command where code cloned
+    working_directory: "${{clone}}" 
     commands:
       - "CGO_ENABLED=0 go test -v -run=Unit"
     stage: "test"
     
+  integration_tests:
+    title: "Integration Test"
+    type: "freestyle" 
+    image: ${{build_deps}}
+    working_directory: "${{clone}}" 
+    commands:
+      - "CGO_ENABLED=0 go test -v -run=Integration"
+    stage: "test"    
+    
   build_app:
     title: "Building App Docker image"
     type: "build"
-    image_name: "public-tag-checker"
+    image_name: "kkapelon/public-tag-checker"
     working_directory: "${{clone}}"
-    tag: "${{CF_BRANCH_TAG_NORMALIZED}}"
+    tag: latest 
     dockerfile: "Dockerfile"
-    stage: "build"    
+    registry: dockerhub
+    stage: "build"   
+  
+  create_plugin:
+    title: "Create plugin"
+    type: "freestyle" 
+    image: codefresh/cli
+    working_directory: "${{clone}}" 
+    commands:
+      - "codefresh replace step-type kostis-codefresh/newest-dockerhub-tag -f find-newest-tag.yml"
+    stage: "deploy"     
+
 
