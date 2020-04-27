@@ -1,0 +1,86 @@
+version: '1.0'
+kind: step-type
+metadata:
+  name: kostis-codefresh/newest-dockerhub-tag
+  isPublic: true
+  description: >-
+    Finds the newest tag of a dockerhub image according to semantic versioning.
+  sources:
+    - 'https://github.com/kostis-codefresh/public-tag-checker'
+  stage: incubating
+  maintainers:
+    - name: Kostis Kapelonis
+  categories:
+    - utility
+  official: false
+  tags: []
+  icon:
+    type: svg
+    url: https://cdn.worldvectorlogo.com/logos/docker.svg
+    background: '#f4f4f4'
+  examples:
+    - description: example-1
+      workflow:
+        version: '1.0'
+        steps:
+          find_newest_dockerhub_tag:
+            title: Finding newest tag of Ubuntu
+            type: kostis-codefresh/newest-dockerhub-tag
+            arguments:
+              BASE_IMAGE: 'ubuntu'
+          print_tag:
+            title: Printing newest tag
+            image: alpine
+            commands:
+              - echo $NEWEST_TAG
+              - echo ${{steps.find_newest_dockerhub_tag.output.NEWEST_TAG}}
+  latest: true
+  version: 1.0.0
+spec:
+  arguments: |-
+    {
+        "definitions": {},
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "additionalProperties": false,
+        "patterns": [],
+        "required": [
+          "BASE_IMAGE"
+        ],
+        "properties": {
+            "BASE_IMAGE": {
+                "type": "string",
+                "description": "name of Dockerhub image"
+            }
+        }
+    }
+  returns: |-
+    {
+        "definitions": {},
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "additionalProperties": true,
+        "patterns": [],
+        "required": [
+          "NEWEST_TAG"
+        ],
+        "properties": {
+            "NEWEST_TAG": {
+                "type": "string",
+                "description": "Newest tag that was found in Dockerhub"
+            }
+        }
+    }  
+  steps:
+    main:
+      name: kostis-codefresh/newest-dockerhub-tag
+      image: kkapelon/public-tag-checker
+      commands:
+        - NEWEST_TAG=$(/app/public-tag-newest $BASE_IMAGE)
+        - export NEWEST_TAG
+        - cf_export NEWEST_TAG
+      environment:
+      - 'BASE_IMAGE=${{BASE_IMAGE}}'
+
+
+
